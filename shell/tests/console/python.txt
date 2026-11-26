@@ -1,0 +1,27 @@
+size 100 30
+waitfor >
+type cd /d \
+enter
+waitfor :\>
+type python -c "import os,sys; print('hello', os.get_terminal_size(), sys.stdout.isatty(), sys.stdin.isatty())"
+enter
+waitfor True True
+waitfor :\>
+type python
+enter
+waitfor >>>
+type name = input('name? ')
+enter
+waitfor name?
+type Ada
+enter
+type print('\x1b[31mred\x1b[0m', name * 3)
+enter
+waitfor AdaAdaAda
+type exit()
+enter
+sleep 300
+type echo typed ahead
+enter
+waitfor typed ahead
+dump

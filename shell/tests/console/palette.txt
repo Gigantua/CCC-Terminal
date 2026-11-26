@@ -1,0 +1,7 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python palette_probe.py
+enter
+waitfor table=da3700,112233 osc=ESC]4;4;rgb:3333/2222/1111

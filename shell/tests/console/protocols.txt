@@ -1,0 +1,26 @@
+size 220 40
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python protocols_probe.py
+enter
+waitfor read-ready
+waitfor ;1RESC[
+waitfor ;3RESC[
+waitfor ;5R]
+waitfor aXb
+waitfor cursors=[ESC[>1;2;3;29;30;40;100;101 q]
+waitfor cursorset=[ESC[>100;1:2:3:4 qESC[>101;30:0;40:2:255:0:0 q]
+waitfor cursorclear=[ESC[>100 q]
+waitfor list=[ESC]5522;type=read:status=OKESC\ESC]5522;type=read:status=DATA:mime=Lg==;dGV4dC9wbGFpbg==ESC\ESC]5522;type=read:status=DONEESC\]
+waitfor write=[ESC]5522;type=write:status=DONEESC\]
+waitfor wants to read the clipboard
+key y
+waitfor read=[ESC]5522;type=read:status=OK:id=a1ESC\ESC]5522;type=read:status=DATA:mime=dGV4dC9wbGFpbg==:id=a1;aGVsbG81NTIyESC\ESC]5522;type=read:status=DONE:id=a1ESC\]
+waitfor paste-ready
+paste hello
+waitfor event=[ESC]5522;type=read:status=OK:pw=
+waitfor pasted=[ESC]5522;type=read:status=OKESC\ESC]5522;type=read:status=DATA:mime=dGV4dC9wbGFpbg==;aGVsbG8=ESC\ESC]5522;type=read:status=DONEESC\]
+waitfor placeholder-ready
+pictures 0,20 0x0 2x2 z0
+enter

@@ -1,0 +1,13 @@
+size 100 30
+waitfor >
+type echo first-%errorlevel%& echo second-%errorlevel%
+enter
+waitfor second-0
+key o ctrl shift
+clipboard first-0|second-0
+type python -c "print('\x1b]133;A\x1b\\py> run', end=''); print('\x1b]133;C\x1b\\'); print('alpha'); print('beta'); print('\x1b]133;A\x1b\\', end='')"
+enter
+waitfor beta
+sleep 1000
+key o ctrl shift
+clipboard alpha|beta

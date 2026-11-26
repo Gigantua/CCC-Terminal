@@ -1,0 +1,52 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python wheel_probe.py mouse
+enter
+waitfor probe-ready
+mouse down 5 3
+mouse move 9 3
+mouse up 9 3
+mouse rdown 7 2 c
+mouse rup 7 2 c
+mouse down 2 2 s
+mouse up 2 2 s
+type q
+waitfor probe-mouse=[ESC[<0;6;4MESC[<0;10;4mESC[<18;8;3MESC[<18;8;3m]
+type python wheel_probe.py drag
+enter
+waitfor probe-ready
+mouse down 1 1
+mouse move 1 1
+mouse move 4 1
+mouse up 4 1
+type q
+waitfor probe-drag=[ESC[<0;2;2MESC[<32;5;2MESC[<0;5;2m]
+type python wheel_probe.py any
+enter
+waitfor probe-ready
+mouse hover 3 1
+mouse hover 3 1
+mouse hover 4 1
+focus 0
+focus 1
+type q
+waitfor probe-any=[ESC[<35;4;2MESC[<35;5;2MESC[OESC[I]
+type python wheel_probe.py plain
+enter
+waitfor probe-ready
+mouse down 5 3
+mouse up 5 3
+type q
+waitfor probe-plain=[]
+type python wheel_probe.py pixels
+enter
+waitfor probe-ready
+mouse hover 30 12
+mouse hover 30 12
+mouse hover 31 12
+mouse hover 33 13
+type q
+waitfor probe-pixels=[ESC[<35;31;13MESC[<35;32;13MESC[<35;34;14M]
+dump

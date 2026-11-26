@@ -1,0 +1,4 @@
+header skipped
+#comment
+first
+second word

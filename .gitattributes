@@ -1,0 +1,5 @@
+* text=auto eol=lf
+shell/tests/** -text
+*.ttf binary
+*.icns binary
+*.png binary

@@ -1,0 +1,34 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python link_probe.py live
+enter
+waitfor links-ready
+link alpha https://example.com/one
+link plain -
+link beta https://example.com/two
+link ta https://example.com/two
+link gamma file:///C:/tmp/x.txt
+link delta -
+link after -
+enter
+type echo ph^ase1
+enter
+waitfor phase1
+link alpha https://example.com/one
+link ta https://example.com/two
+link gamma file:///C:/tmp/x.txt
+link delta -
+type cls
+enter
+type python link_probe.py file %TEMP%\ccc_links.txt
+enter
+type type %TEMP%\ccc_links.txt & echo ph^ase2
+enter
+waitfor phase2
+link alpha https://example.com/one
+link ta https://example.com/two
+link gamma file:///C:/tmp/x.txt
+link delta -
+dump

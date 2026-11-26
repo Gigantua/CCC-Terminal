@@ -1,0 +1,23 @@
+size 110 32
+waitfor >
+type cd /d %CCC_ROOT%
+enter
+waitfor ccc>
+type claude
+enter
+sleep 8000
+dump
+type /hel
+sleep 1500
+dump
+key esc
+sleep 300
+key c ctrl
+sleep 400
+key c ctrl
+sleep 3000
+dump
+type echo exit-marker
+enter
+waitfor exit-marker | 15000
+dump

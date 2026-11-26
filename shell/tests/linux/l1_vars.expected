@@ -1,0 +1,21 @@
+[Hello World] [Hello] [World] [Hello There] [X World]
+[quoted value]
+X=17 Y=34 Z=10
+M=2
+CCCVAR_ONE=1
+CCCVAR_TWO=2
+eq
+case-insensitive
+numeric compare
+string compare
+undefined ok
+N=3 L=abc
+after endlocal N=[]
+setlocal restored
+errorlevel=0
+missing command sets errorlevel
+sub args [one] ["two words"] [two words]
+sub returned 5
+ok 
+and-branch
+or-branch

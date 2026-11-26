@@ -1,0 +1,38 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python sgr_probe.py live
+enter
+waitfor sgr-ready
+attr curly fg=01000000 bg=01000000 flags=0308 uc=01000000
+attr bold fg=01000000 bg=01000000 flags=0009 uc=01000000
+attr noul fg=01000000 bg=01000000 flags=0001 uc=01000000
+attr rgbspace fg=001e140a bg=01000000 flags=0000 uc=01000000
+attr rgbshort fg=001e140a bg=01000000 flags=0000 uc=01000000
+attr legacy fg=00030201 bg=01000000 flags=0000 uc=01000000
+attr ulcolor fg=01000000 bg=01000000 flags=0008 uc=020000c4
+attr double fg=01000000 bg=01000000 flags=0208 uc=01000000
+attr dashed fg=01000000 bg=01000000 flags=0508 uc=00070809
+attr dotted fg=01000000 bg=01000000 flags=0408 uc=01000000
+attr italicdouble fg=01000000 bg=01000000 flags=020c uc=01000000
+enter
+type echo ph^ase1
+enter
+waitfor phase1
+attr curly fg=01000000 bg=01000000 flags=0308 uc=01000000
+attr noul fg=01000000 bg=01000000 flags=0001 uc=01000000
+attr rgbspace fg=001e140a bg=01000000 flags=0000 uc=01000000
+attr ulcolor fg=01000000 bg=01000000 flags=0008 uc=020000c4
+attr dashed fg=01000000 bg=01000000 flags=0508 uc=00070809
+attr italicdouble fg=01000000 bg=01000000 flags=020c uc=01000000
+type cls
+enter
+type python sgr_probe.py & echo ph^ase2
+enter
+waitfor phase2
+attr curly fg=01000000 bg=01000000 flags=0308 uc=01000000
+attr noul fg=01000000 bg=01000000 flags=0001 uc=01000000
+attr rgbshort fg=001e140a bg=01000000 flags=0000 uc=01000000
+attr ulcolor fg=01000000 bg=01000000 flags=0008 uc=020000c4
+attr dashed fg=01000000 bg=01000000 flags=0508 uc=00070809

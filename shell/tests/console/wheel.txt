@@ -1,0 +1,19 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python wheel_probe.py mouse
+enter
+waitfor probe-ready
+wheel 120 5 3
+wheel -120 5 3
+type q
+waitfor probe-mouse=[ESC[<64;6;4MESC[<65;6;4M]
+type python wheel_probe.py plain
+enter
+waitfor probe-ready
+wheel 120 5 3
+wheel -240 5 3
+type q
+waitfor probe-plain=[]
+dump

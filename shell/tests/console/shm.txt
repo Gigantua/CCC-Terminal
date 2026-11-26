@@ -1,0 +1,10 @@
+size 160 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python shm_probe.py
+enter
+waitfor shm-ready
+waitfor shm=[ESC_Gi=3;OKESC\ESC_Gi=4;ENOENT:shared memory could not be readESC\]
+pictures 0,6 4x2 2x2 z0
+enter

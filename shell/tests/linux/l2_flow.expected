@@ -1,0 +1,20 @@
+l=1
+l=3
+l=5
+l=7
+w=alpha
+w=beta gamma
+w=delta
+f=x/z
+rest=two+three four
+data=first
+data=second
+cmd=from command
+nested=nested call
+count=3
+first=a
+after shift=b all=a b c d
+name=some file ext=.txt quoted="some file.txt" unquoted=some file.txt
+helper got [from-main]
+helper errorlevel=4
+done

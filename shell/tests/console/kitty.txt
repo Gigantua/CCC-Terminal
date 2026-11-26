@@ -1,0 +1,35 @@
+size 120 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python kitty_probe.py 1
+enter
+waitfor ready-1
+key a
+key a shift
+key a ctrl
+key esc
+key enter shift
+key tab shift
+key up ctrl
+key 0x72
+key enter
+waitfor probe-1=[aAESC[97;5uESC[27uESC[13;2uESC[9;2uESC[1;5AESC[13~CR]
+type python kitty_probe.py 3
+enter
+waitfor ready-3
+key a ctrl repeat
+key enter
+key 0x72 shift
+waitfor probe-3=[ESC[97;5uESC[97;5:2uESC[97;5:3uCRESC[13;2~ESC[13;2:3~]
+type python kitty_probe.py 31
+enter
+waitfor ready-31
+key a shift
+key 0x10
+key enter
+waitfor probe-31=[ESC[97:65;2;65uESC[97:65;2:3uESC[57441uESC[57441;1:3uESC[13uESC[13;1:3u]
+type python kitty_probe.py stack
+enter
+waitfor probe-stack=[ESC[?1uESC[?0uESC[?3uESC[?11uESC[?9uESC[?1uESC[?5uESC[?1uESC[?0u]
+dump

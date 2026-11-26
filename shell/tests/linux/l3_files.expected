@@ -1,0 +1,28 @@
+hello
+world
+hello
+world
+hello
+world
+ren ok
+move ok
+f1.bak
+f2.bak
+found f1.bak
+found f2.bak
+del ok
+one.txt
+sub
+three.txt
+renamed.txt
+grouped one
+grouped two
+line grouped
+line grouped
+line appended
+piped=[]
+first=[hello]
+error captured
+exit code test 
+code=6
+cleanup ok

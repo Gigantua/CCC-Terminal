@@ -1,0 +1,46 @@
+size 100 30
+waitfor >
+type zsh -f
+enter
+waitfor % | 15000
+type stty size; tput cols; tput lines; echo "TERM=$TERM ctty=$(ps -o tty= -p $$)-E""ND"
+enter
+waitfor -END
+dump
+type printf '\e[38;2;255;100;0mtruecolor\e[0m \e[1;4mbold\e[0m wide:\xe6\x97\xa5\xe6\x9c\xac done\n'
+enter
+waitfor wide:
+type sleep 30
+enter
+sleep 500
+key c ctrl
+waitfor % | 5000
+type echo interrupted-$?
+enter
+waitfor interrupted-130
+type top -s 1
+enter
+waitfor Load Avg
+sleep 1200
+dump
+type q
+waitfor % | 5000
+type vim -u NONE -c 'set nu' /etc/shells
+enter
+waitfor /bin/zsh
+dump
+type :q!
+enter
+waitfor % | 5000
+type exit
+enter
+waitfor > | 5000
+type sleep 30
+enter
+sleep 500
+key c ctrl
+waitfor > | 5000
+type echo back-%errorlevel%
+enter
+waitfor back-
+dump

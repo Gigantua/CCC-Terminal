@@ -1,0 +1,21 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python replies_probe.py
+enter
+waitfor probe-done
+waitfor pixels=[ESC[4;480;800t]
+waitfor cell=[ESC[6;16;8t]
+waitfor chars=[ESC[8;30;100t]
+waitfor resize=[ESC[48;30;100;480;800t]
+waitfor mode2048=[ESC[?2048;1$y]
+waitfor mode2027=[ESC[?2027;3$y]
+waitfor scheme=[ESC[?997;1n]
+waitfor fg=[ESC]10;rgb:cccc/cccc/ccccESC\]
+waitfor setbg=[ESC[?997;2n]
+waitfor bg=[ESC]11;rgb:f0f0/f0f0/f0f0ESC\]
+waitfor pal=[ESC]4;1;rgb:1212/3434/5656ESC\]
+waitfor kitty=[ESC]21;2=rgb:1313/a1a1/0e0e;foreground=rgb:0101/0202/0303ESC\]
+waitfor push=[ESC]4;1;rgb:1212/3434/5656ESC\]
+waitfor reset=[ESC]4;1;rgb:c5c5/0f0f/1f1fESC\]

@@ -1,0 +1,21 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python graphics_probe.py
+enter
+waitfor placed-ready
+waitfor query=[ESC_Gi=31;OKESC\]
+waitfor chunked=[ESC_Gi=5;OKESC\]
+waitfor png=[ESC_Gi=6;OKESC\]
+waitfor zlib=[ESC_Gi=7;OKESC\]
+waitfor bad=[ESC_Gi=8;ENODATA:insufficient image dataESC\]
+waitfor place=[ESC_Gi=5;OKESC\]
+waitfor placepng=[ESC_Gi=6,p=2;OKESC\]
+waitfor missing=[ESC_Gi=99;ENOENT:image not foundESC\]
+pictures 0,19 0x0 4x4 z-1;4,15 4x2 2x2 z0
+enter
+waitfor deleted-ready
+waitfor delete=[ESC_Gi=5;ENOENT:image not foundESC\]
+pictures 0,19 0x0 4x4 z-1
+enter

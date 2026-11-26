@@ -1,0 +1,37 @@
+size 100 30
+waitfor >
+type python -c "import time; print('sleeping', flush=True); time.sleep(30)"
+enter
+waitfor sleeping
+sleep 300
+key c ctrl
+waitfor KeyboardInterrupt | 5000
+type ping -n 30 127.0.0.1
+enter
+waitfor TTL=128 | 5000
+sleep 1200
+key c ctrl
+type echo ping-stopped
+enter
+waitfor ping-stopped | 5000
+type cmd.exe /k prompt INNER$G
+enter
+waitfor INNER>
+type ver
+enter
+waitfor [Version
+type set /p X=type-something:
+enter
+waitfor type-something:
+type hello
+enter
+type echo got %X%
+enter
+waitfor got hello
+type exit
+enter
+sleep 500
+type echo after-inner
+enter
+waitfor after-inner
+dump

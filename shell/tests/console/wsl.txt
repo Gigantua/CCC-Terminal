@@ -1,0 +1,68 @@
+size 100 30
+waitfor >
+type wsl.exe --cd ~
+enter
+waitfor $ | 60000
+type stty size; tput cols; tput lines; echo "TERM=$TERM"
+enter
+waitfor TERM=
+type printf '\e[38;2;255;100;0mtruecolor\e[0m \e[1;4mbold\e[0m wide:\xe6\x97\xa5\xe6\x9c\xac done\n'
+enter
+waitfor done
+type echo abc
+key left
+key left
+key home
+key right
+key right
+key right
+key right
+key right
+type X
+key end
+type Y
+enter
+waitfor XabcY
+type echo history-check
+enter
+key up
+enter
+sleep 500
+dump
+type top -d 0.5
+enter
+waitfor load average
+sleep 800
+dump
+type q
+waitfor $
+type vim -u NONE -c 'set nu' /etc/os-release
+enter
+waitfor VERSION
+dump
+type :q!
+enter
+waitfor $
+type tmux -f /dev/null new-session -s ccc
+enter
+waitfor [ccc] | 15000
+key b ctrl
+type %
+sleep 500
+type echo right-pane
+enter
+waitfor right-pane
+sleep 300
+dump
+type tmux kill-server
+enter
+waitfor exited | 10000
+type sleep 30
+enter
+sleep 500
+key c ctrl
+waitfor $
+type exit
+enter
+waitfor ccc> | 15000
+dump

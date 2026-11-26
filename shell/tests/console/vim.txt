@@ -1,0 +1,16 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%
+enter
+type "C:\Program Files\Git\usr\bin\vim.exe" -u NONE shell\condrv.h
+enter
+waitfor #pragma once
+dump
+type 3Gdd
+sleep 300
+dump
+type :q!
+enter
+waitfor ccc>
+sleep 200
+dump

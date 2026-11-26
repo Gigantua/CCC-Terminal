@@ -1,0 +1,23 @@
+size 120 40
+waitfor >
+type cmd /d /k prompt inner$G
+enter
+waitfor inner>
+type doskey ll=echo got-$1-$2-[$*]$Techo second-%errorlevel%-line
+enter
+type ll alpha beta
+enter
+waitfor got-alpha-beta-[alpha beta]
+waitfor second-0-line
+type doskey /macros
+enter
+waitfor ll=echo got-$1-$2-[$*]$Techo second-%errorlevel%-line
+type doskey /history & echo his^tory-done
+enter
+waitfor history-done
+waitfor ll alpha beta
+type exit
+enter
+type echo back-%errorlevel%-ok
+enter
+waitfor back-0-ok

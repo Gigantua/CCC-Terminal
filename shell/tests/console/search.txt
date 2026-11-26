@@ -1,0 +1,46 @@
+size 60 12
+waitfor >
+type for /l %i in (100,1,160) do @echo item%i
+enter
+waitfor item160
+type echo done-li^st
+enter
+waitfor done-list
+key f ctrl shift
+type ITEM15
+selline item159
+selection item15
+enter
+selline item158
+enter
+enter
+selline item156
+key enter shift
+selline item157
+key back
+selline item160
+type 59
+selline item159
+type zz
+waitfor not found
+key esc
+selline item159
+key f ctrl shift
+type done-list
+selline done-list
+key esc
+type python -q
+enter
+waitfor >>>
+type print('\n'.join('py%d' % i for i in range(300, 330)))
+enter
+waitfor py329
+key f ctrl shift
+type py31
+selline py319
+enter
+selline py318
+key esc
+type exit()
+enter
+dump

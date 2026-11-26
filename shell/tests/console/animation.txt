@@ -1,0 +1,17 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type python animation_probe.py
+enter
+waitfor stopped-ready
+pixels ff0000ff,ff0000ff
+enter
+waitfor current-ready
+pixels ff00ff00,ff00ff00
+enter
+waitfor running-ready
+pixels ff00ff00,ffff0000 | 3000
+pixels ff0000ff,ff0000ff | 3000
+pixels ff00ff00,ff00ff00 | 3000
+enter

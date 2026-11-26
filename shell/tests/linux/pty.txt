@@ -1,0 +1,23 @@
+size 100 30
+waitfor >
+type bash --norc
+enter
+waitfor $ | 15000
+type stty size; echo "TERM=$TERM ctty=$(ps -o tty= -p $$)-E""ND"
+enter
+waitfor -END
+type sleep 30
+enter
+sleep 500
+key c ctrl
+waitfor $ | 5000
+type echo interrupted-$?
+enter
+waitfor interrupted-130
+type seq 1 200000 | tail -1; echo seq-$((1+1))-done
+enter
+waitfor seq-2-done
+dump
+type exit
+enter
+waitfor > | 5000

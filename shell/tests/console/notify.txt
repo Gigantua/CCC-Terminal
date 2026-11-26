@@ -1,0 +1,20 @@
+size 100 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+events
+type python notify_probe.py clean
+enter
+waitfor notify-end
+type echo ste^p1
+enter
+waitfor step1
+events progress:1:40 progress:3:0 bell progress:0:0
+type python notify_probe.py leave
+enter
+waitfor notify-end
+type echo ste^p2
+enter
+waitfor step2
+events progress:1:40 progress:3:0 bell progress:2:75 progress:0:0
+dump

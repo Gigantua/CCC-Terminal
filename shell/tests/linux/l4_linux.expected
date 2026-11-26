@@ -1,0 +1,20 @@
+[plain][two words][quote"inside][back\\slash]
+sh exit=3
+true ok
+false ok
+found sh on PATH
+name=sh
+kernel=Linux
+LINUX
+LOWER
+absolute path ok
+data
+file.txt
+copy.txt
+file.txt
+/tmp/ccc_linux_smoke
+/
+removed
+still found
+HOME is set
+yes

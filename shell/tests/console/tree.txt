@@ -1,0 +1,15 @@
+size 120 30
+waitfor >
+type cd /d %CCC_ROOT%\shell\tests\console
+enter
+type del %TEMP%\ccc_tree_background 2>nul & start /b python tree_probe.py child background
+enter
+type python tree_probe.py parent group
+enter
+waitfor tree-waiting
+key c ctrl
+waitfor tree-interrupted
+waitfor tree-child-alive
+type if exist %TEMP%\ccc_tree_background (echo back^ground-alive) else (echo back^ground-missing)
+enter
+waitfor background-alive

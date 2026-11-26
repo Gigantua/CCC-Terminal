@@ -1,0 +1,686 @@
+size 100 30
+waitfor >
+type python -c "import sys; sys.stdout.write(''.join(f'py {i:05d} abcdefghijklmnopqrstuvwxyz\n' for i in range(3000)))"
+enter
+waitfor py 02999
+type echo py-%errorlevel%-done
+enter
+waitfor py-0-done
+dump
+type python -c "open(r'%TEMP%\ccc_stream_lines.txt', 'w', newline='').write(''.join(f'cat {i:05d} \x1b[3{i&7}mcolor\x1b[0m tail\n' for i in range(3000)))" & echo li^nes-ready
+enter
+waitfor lines-ready
+type "C:\Program Files\Git\usr\bin\cat.exe" %TEMP%\ccc_stream_lines.txt
+enter
+waitfor cat 02999
+type echo cat-%errorlevel%-done
+enter
+waitfor cat-0-done
+type wsl.exe -e seq -f "seq %05g" 0 2999
+enter
+waitfor seq 02999 | 30000
+sleep 2500
+type echo seq-%errorlevel%-done
+enter
+waitfor seq-0-done
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
+key pgup shift
+dump
