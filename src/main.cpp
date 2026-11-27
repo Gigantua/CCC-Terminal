@@ -91,6 +91,10 @@ static GpuConstants stripConstants(GpuConstants k, const Strip& strip, const scr
     k.maximized = win.maximized();
     k.closeColor = vt::rgb(196, 43, 28);
     k.tabShape = (uint32_t)strip.tabCols | (uint32_t)(std::min)(tabCount, 255) << 8 | (uint32_t)Strip::scaled(6, dpi) << 16;
+    StripHover hover = win.stripHover();
+    bool closeHot = hover.close && hover.tab >= 0 && hover.drop < 0 && hover.lifted < 0;
+    k.closeHover = closeHot ? (uint32_t)(hover.tab * strip.tabCols + strip.tabCols - 3 + 1) : 0;
+    k.closeHoverColor = strip::mix(view.bg & 0xFFFFFF, strip::contrast(view.bg), 0.26f);
     return k;
 }
 

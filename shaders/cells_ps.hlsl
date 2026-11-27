@@ -39,6 +39,8 @@ cbuffer FrameConstants : register(b0)
     uint closeColor;
     uint tabShape;
     uint pictureCount;
+    uint closeHover;
+    uint closeHoverColor;
 };
 
 struct Picture
@@ -215,6 +217,13 @@ float3 stripPixel(uint2 p)
     Cell cell = cells[stripOffset + col];
     int ty = int(p.y) - int(stripTextTop);
     float3 color = unpackColor(cell.bg);
+    if (closeHover > 0)
+    {
+        // Hovered tab close button: a round highlight around the x only, as in a browser.
+        float2 center = float2(stripX + (closeHover - 1) * cellSize.x + cellSize.x * 0.5, stripTextTop + cellSize.y * 0.5);
+        float d = length(float2(p) + 0.5 - center) - cellSize.y * 0.5;
+        color = lerp(unpackColor(closeHoverColor), color, saturate(d + 0.5));
+    }
     if (ty >= 0 && ty < int(cellSize.y))
         color = blendGlyphOver(cell, uint2((p.x - stripX) % cellSize.x, uint(ty)), color);
     uint stripTabCols = tabShape & 255;

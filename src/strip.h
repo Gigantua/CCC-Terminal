@@ -1,5 +1,7 @@
 #pragma once
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -79,6 +81,22 @@ struct StripTab {
 struct StripHover {
     int tab = -1;
     bool close = false, plus = false;
+    int drop = -1, lifted = -1;
+};
+
+// Where a tab dragged from another ccc window would land; the dragging window reports the pointer.
+struct DropSlot {
+    std::atomic<int> slot{ -1 };
+    std::atomic<long long> since{ 0 };
+    static long long nowMs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
+    bool set(int s) { since = nowMs(); return slot.exchange(s) != s; }
+    // A drag that ends without word from the other window (it crashed) stops showing after 30 s.
+    int get() const { int s = slot.load(); return s >= 0 && nowMs() - since.load() < 30000 ? s : -1; }
+    // The slot for a screen point already converted to this window: its tab under the pointer, else the end.
+    static int at(const Strip& s, int x, int y) {
+        int tab = y >= 0 && y < s.height ? s.tabAt(x) : -1;
+        return tab >= 0 ? tab : s.count;
+    }
 };
 
 namespace strip {
@@ -108,10 +126,17 @@ inline std::u32string codepoints(const std::string& utf8) {
 inline void place(Console::Frame& f, int col, int last, const std::u32string& text, uint32_t fg, uint32_t bg) {
     for (size_t i = 0; i < text.size() && col <= last; ++i) {
         char32_t cp = text[i];
-        int w = Console::clusterWidth(&cp, 1);
+        bool next = i + 1 < text.size();
+        if (next && (text[i + 1] == unicode::VS_EMOJI || text[i + 1] == unicode::VS_TEXT)) ++i;
+        bool emoji = unicode::hasEmojiForm(cp) ? !(next && text[i] == unicode::VS_TEXT) : next && text[i] == unicode::VS_EMOJI;
+        int w = emoji ? 2 : Console::clusterWidth(&cp, 1);
         if (w <= 0) continue;
         if (col + w - 1 > last) break;
-        f.cells[col] = cp < 0x20 ? ' ' : cp;
+        if (emoji) {
+            f.cells[col] = Console::CLUSTER_BASE + (uint32_t)f.clusters.size();
+            f.clusters.push_back(std::u32string{ cp, (char32_t)unicode::VS_EMOJI });
+        }
+        else f.cells[col] = cp < 0x20 ? ' ' : cp;
         f.attrs[col].fg = fg;
         f.attrs[col].bg = bg;
         if (w == 2) { f.cells[col + 1] = Console::WIDE_TAIL; f.attrs[col + 1] = f.attrs[col]; }
@@ -126,7 +151,7 @@ inline std::u32string fit(const std::u32string& title, int cols) {
 
 inline void layout(Console::Frame& f, const Strip& s, const std::vector<StripTab>& tabs, int active, const StripHover& hover, uint32_t termBg) {
     uint32_t base = termBg & 0xFFFFFF, ink = contrast(base), bar = barColor(base);
-    uint32_t hot = mix(base, ink, 0.17f), hotter = mix(base, ink, 0.26f);
+    uint32_t hot = mix(base, ink, 0.17f);
     uint32_t dim = mix(base, ink, 0.62f), bright = mix(base, ink, 0.92f), accent = vt::rgb(58, 150, 221);
     f.cols = s.cols();
     f.rows = 1;
@@ -136,8 +161,18 @@ inline void layout(Console::Frame& f, const Strip& s, const std::vector<StripTab
     blank.fg = bright;
     blank.bg = bar;
     f.attrs.assign(f.cols, blank);
-    for (int i = 0; i < (int)tabs.size(); ++i) {
-        int c0 = i * s.tabCols, last = (std::min)(c0 + s.tabCols - 2, f.cols - 1);
+    int lifted = hover.lifted >= 0 && hover.lifted < (int)tabs.size() ? hover.lifted : -1;
+    int shown = (int)tabs.size() - (lifted >= 0 ? 1 : 0);
+    int drop = hover.drop >= 0 ? (std::min)(hover.drop, shown) : -1;
+    if (drop >= 0) {
+        int c0 = drop * s.tabCols, last = (std::min)(c0 + s.tabCols - 2, f.cols - 1);
+        for (int c = c0; c <= last; ++c) f.attrs[c].bg = mix(bar, accent, 0.35f);
+    }
+    for (int i = 0, k = 0; i < (int)tabs.size(); ++i) {
+        if (i == lifted) continue;
+        int slot = drop >= 0 && k >= drop ? k + 1 : k;
+        ++k;
+        int c0 = slot * s.tabCols, last = (std::min)(c0 + s.tabCols - 2, f.cols - 1);
         if (c0 >= f.cols) break;
         bool on = i == active, hovered = hover.tab == i;
         uint32_t bg = on ? base : hovered ? hot : bar, fg = on || hovered ? bright : dim;
@@ -145,9 +180,9 @@ inline void layout(Console::Frame& f, const Strip& s, const std::vector<StripTab
         if (tabs[i].activity && !on) place(f, c0, c0, U"\x2022", accent, bg);
         place(f, c0 + 1, (std::min)(last - 3, f.cols - 1), fit(tabs[i].title, s.tabCols - 5), fg, bg);
         int close = c0 + s.tabCols - 3;
-        if (close < f.cols) place(f, close, close, U"\x00D7", hovered && hover.close ? bright : dim, hovered && hover.close ? hotter : bg);
+        if (close < f.cols) place(f, close, close, U"\x00D7", hovered && hover.close ? bright : dim, bg);
     }
-    int plus = (int)tabs.size() * s.tabCols;
+    int plus = (shown + (drop >= 0 ? 1 : 0)) * s.tabCols;
     for (int c = plus; c < plus + Strip::NEW_COLS && c < f.cols; ++c) f.attrs[c].bg = hover.plus ? hot : bar;
     if (plus + 1 < f.cols) place(f, plus + 1, plus + 1, U"+", hover.plus ? bright : dim, hover.plus ? hot : bar);
 }
