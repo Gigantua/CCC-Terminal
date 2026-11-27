@@ -34,8 +34,15 @@ With `/c`, `/k`, `/?`, or redirected input/output, ccc runs as a text shell in t
 On Linux and macOS, a token that starts with `/` is a switch only when the builtin knows it. Otherwise it is a path, so `dir /s /tmp` and
 `cd /d /` work as expected. Programs and `.bat`/`.cmd` files are found on `PATH`.
 
-Window keys: Ctrl+Shift+T/N/W (reopen, new and close tab), Ctrl+Tab, Ctrl+Shift+F (search), Ctrl+wheel or Ctrl+= / Ctrl+- (font size),
-Alt+Enter (full screen). On macOS the Command key covers the same actions: Cmd+T/W, Cmd+1..9, Cmd+C/V, Cmd+F and Cmd+=/-.
+On Linux and macOS, programs get two POSIX habits in their arguments: `'single quotes'` group words (`git commit -m 'fix bug'`), and a
+leading `~` or `~/` is the home folder (also for `cd ~`). Built-in commands and batch files keep cmd behavior. A program whose input
+or output is redirected or piped still gets the terminal, so `git log | less`, `vim 2>nul` and password prompts work. When started
+from Finder or the Dock, ccc takes its environment (PATH and the rest) from your login shell, as Terminal does.
+
+Tab keys work like a web browser: Ctrl+T (new), Ctrl+W (close), Ctrl+Shift+T (reopen closed tab), Ctrl+Tab, Ctrl+1..9; Ctrl+Shift+F
+(search), Ctrl+wheel or Ctrl+= / Ctrl+- (font size), Alt+Enter (full screen). On macOS the Command key covers the same actions: Cmd+T/W,
+Cmd+Shift+T, Cmd+1..9, Cmd+C/V, Cmd+F and Cmd+=/-; Ctrl+W there deletes the previous word. On Linux and macOS, Ctrl+V pastes at the ccc
+prompt but goes to a running program (vim, nano, bash); paste into programs with Cmd+V, Ctrl+Shift+V or Shift+Insert.
 
 ## Building
 

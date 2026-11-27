@@ -13,6 +13,12 @@ inline int Shell::cmdCd(const std::string& args, Ctx& c) {
     std::string a = trim(args);
     bool d = false;
     if (a.size() >= 2 && (a[0] == '/') && toupper((unsigned char)a[1]) == 'D' && isSwitch(a.substr(0, a.find_first_of(" \t")), "D")) { d = true; a = trim(a.substr(2)); }
+#ifndef _WIN32
+    if (a[0] == '~' && (a.size() == 1 || a[1] == '/')) {
+        std::string home;
+        if (getVar("HOME", home) && !home.empty()) a = home + a.substr(1);
+    }
+#endif
     a = unquote(a);
     if (a.empty()) { c.out.line(cwd()); return 0; }
     if (a.size() == 2 && a[1] == ':' && !os::driveOf(a).empty()) {

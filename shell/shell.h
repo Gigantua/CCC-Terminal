@@ -20,7 +20,7 @@ namespace ccc {
 class Shell {
 public:
     struct Batch;
-    struct Ctx { Sink out, err; Source in; };
+    struct Ctx { Sink out, err; Source in; bool pipeLeft = false; };
     explicit Shell(Host& h) : host(h) {
         createStdBuffers();
         srand((unsigned)std::chrono::steady_clock::now().time_since_epoch().count());
@@ -405,8 +405,9 @@ private:
     int external(const std::string& text, Ctx& c);
 
     int spawn(const std::string& exe, const std::string& cmdline, Ctx& c, bool wait);
-    int spawnAttached(ConsoleServer& server, const std::string& exe, const std::string& cmdline, Ctx& c);
+    int spawnAttached(ConsoleServer& server, const std::string& exe, const std::string& cmdline, Ctx& c, const int* fds = nullptr);
     static bool attachable(const Ctx& c);
+    static bool terminalStreams(const Ctx& c, int (&fds)[3]);
     int waitChild(os::Process& process);
     int childDone(int code);
     int notRun(Ctx& c, const std::string& text);

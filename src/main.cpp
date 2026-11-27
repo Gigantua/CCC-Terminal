@@ -227,7 +227,12 @@ static int run(const std::vector<std::string>& args) {
             opt.adoptY = atoi(next().c_str());
             opt.adopting = windowSwitch = true;
         }
-        else if (a == "--headless") return Headless().run(next());
+        else if (a == "--headless") {
+#ifndef _WIN32
+            signal(SIGPIPE, SIG_IGN);
+#endif
+            return Headless().run(next());
+        }
         else if (a[0] == '/' && a.size() > 1 && strchr("cCkK?", a[1])) shellSwitch = true;
     }
     if (opt.tab) {

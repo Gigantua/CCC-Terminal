@@ -61,7 +61,7 @@ public:
         notify();
     }
 
-    bool launch(const std::string& exe, const std::string& cmdline, os::Process& process, int& error) {
+    bool launch(const std::string& exe, const std::string& cmdline, os::Process& process, int& error, const int* fds = nullptr) {
         int master = posix_openpt(O_RDWR | O_NOCTTY | O_CLOEXEC);
         if (master < 0 || grantpt(master) || unlockpt(master)) { error = errno; if (master >= 0) ::close(master); return false; }
         std::string slave = ptsname(master);
@@ -76,7 +76,7 @@ public:
         env.push_back("COLORTERM=truecolor");
         auto envp = os::pointers(env);
         pid_t pid = -1;
-        int rc = os::spawnOnTerminal(exe, argv.data(), envp.data(), slave, ws, pid);
+        int rc = os::spawnOnTerminal(exe, argv.data(), envp.data(), slave, ws, pid, fds);
         if (rc) { error = rc; ::close(master); return false; }
         process.pid = pid;
         process.waited = false;

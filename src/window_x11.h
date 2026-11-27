@@ -516,9 +516,10 @@ private:
         bool ctrl = mods & ControlMask, shift = mods & ShiftMask, alt = mods & Mod1Mask;
         if (!ctrl || alt) return false;
         if (vk == VK_TAB) postTab(InputEvent::TabCycle, shift ? -1 : 1);
-        else if (shift && vk == 'T') postTab(InputEvent::TabReopen, 1);
+        else if (vk == 'T') postTab(shift ? InputEvent::TabReopen : InputEvent::TabNew, 1);
+        else if (vk == 'W') postTab(InputEvent::TabClose, -1);
+        else if (!shift && vk >= '1' && vk <= '9') postTab(InputEvent::TabSelect, vk == '9' ? (std::max)((int)tabCount - 1, 0) : vk - '1');
         else if (shift && vk == 'N') postTab(InputEvent::TabNew);
-        else if (shift && vk == 'W') postTab(InputEvent::TabClose, -1);
         else return false;
         return true;
     }

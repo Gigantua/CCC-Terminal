@@ -9,7 +9,7 @@
 namespace ccc {
 
 #ifdef _WIN32
-inline bool launchInConsole(ConsoleServer& server, const std::string& exe, const std::string& cmdline, os::Process& process, int& error) {
+inline bool launchInConsole(ConsoleServer& server, const std::string& exe, const std::string& cmdline, os::Process& process, int& error, const int* = nullptr) {
     std::wstring wcmd = os::wide(cmdline);
     PROCESS_INFORMATION pi = {};
     DWORD err = 0;
@@ -19,8 +19,8 @@ inline bool launchInConsole(ConsoleServer& server, const std::string& exe, const
     return true;
 }
 #else
-inline bool launchInConsole(ConsoleServer& server, const std::string& exe, const std::string& cmdline, os::Process& process, int& error) {
-    return server.launch(exe, cmdline, process, error);
+inline bool launchInConsole(ConsoleServer& server, const std::string& exe, const std::string& cmdline, os::Process& process, int& error, const int* fds = nullptr) {
+    return server.launch(exe, cmdline, process, error, fds);
 }
 #endif
 
