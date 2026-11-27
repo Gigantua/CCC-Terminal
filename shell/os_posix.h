@@ -544,12 +544,26 @@ inline std::vector<std::string> splitCommandLine(const std::string& s) {
         ++i;
     }
     out.push_back(a);
+    const char* home = getenv("HOME");
     for (;;) {
         while (i < s.size() && (s[i] == ' ' || s[i] == '\t')) ++i;
         if (i >= s.size()) break;
         a.clear();
         q = false;
+        // A leading ~ or ~/ is the home folder, as in a POSIX shell (not inside quotes, not ~user).
+        if (s[i] == '~' && home && *home && (i + 1 == s.size() || s[i + 1] == '/' || s[i + 1] == ' ' || s[i + 1] == '\t')) { a = home; ++i; }
         for (;;) {
+            // Outside double quotes, '...' is a literal string, as in a POSIX shell: git commit -m 'fix bug'.
+            // A lone apostrophe with no closing one stays an ordinary character (don't).
+            if (!q && i < s.size() && s[i] == '\'') {
+                size_t close = s.find('\'', i + 1);
+                if (close != std::string::npos) {
+                    a.append(s, i + 1, close - i - 1);
+                    i = close + 1;
+                    if (i >= s.size() || s[i] == ' ' || s[i] == '\t') break;
+                    continue;
+                }
+            }
             size_t slashes = 0;
             while (i < s.size() && s[i] == '\\') { ++i; ++slashes; }
             bool copy = true;
@@ -600,7 +614,8 @@ inline posix_spawnattr_t* childSignals(posix_spawnattr_t* at, bool ownGroup) {
     return at;
 }
 
-inline int forkOnTerminal(const std::string& exe, char* const* argv, char* const* envp, const std::string& tty, const winsize& size, pid_t& pid) {
+// fds (optional): for stdin, stdout and stderr, -1 = the terminal, -2 = /dev/null, else that descriptor.
+inline int forkOnTerminal(const std::string& exe, char* const* argv, char* const* envp, const std::string& tty, const winsize& size, pid_t& pid, const int* fds) {
     int report[2];
     if (!kernel::makePipe(report, false)) return errno;
     pid = fork();
@@ -612,13 +627,15 @@ inline int forkOnTerminal(const std::string& exe, char* const* argv, char* const
         signal(SIGPIPE, SIG_DFL);
         sigprocmask(SIG_SETMASK, &none, nullptr);
         setsid();
+        int keep[3] = { -1, -1, -1 };
+        for (int k = 0; fds && k < 3; ++k)
+            keep[k] = fds[k] == -2 ? ::open("/dev/null", k ? O_WRONLY : O_RDONLY) : fds[k] >= 0 ? fcntl(fds[k], F_DUPFD, 3) : -1;
         int fd = ::open(tty.c_str(), O_RDWR);
         if (fd >= 0) {
             ioctl(fd, TIOCSCTTY, 0);
             ioctl(fd, TIOCSWINSZ, &size);
-            dup2(fd, 0);
-            dup2(fd, 1);
-            dup2(fd, 2);
+            for (int k = 0; k < 3; ++k) dup2(keep[k] >= 0 ? keep[k] : fd, k);
+            for (int k = 0; k < 3; ++k) if (keep[k] > 2) ::close(keep[k]);
             if (fd > 2) ::close(fd);
             execve(exe.c_str(), argv, envp);
         }
@@ -636,13 +653,21 @@ inline int forkOnTerminal(const std::string& exe, char* const* argv, char* const
     return 0;
 }
 
-inline int spawnOnTerminal(const std::string& exe, char* const* argv, char* const* envp, const std::string& tty, const winsize& size, pid_t& pid) {
-    if (!kernel::SPAWN_TAKES_TERMINAL) return forkOnTerminal(exe, argv, envp, tty, size, pid);
+inline int spawnOnTerminal(const std::string& exe, char* const* argv, char* const* envp, const std::string& tty, const winsize& size, pid_t& pid, const int* fds = nullptr) {
+    if (!kernel::SPAWN_TAKES_TERMINAL) return forkOnTerminal(exe, argv, envp, tty, size, pid, fds);
     posix_spawn_file_actions_t fa;
     posix_spawn_file_actions_init(&fa);
+    std::vector<int> temps;
+    int src[3] = { -1, -1, -1 };
+    for (int k = 0; fds && k < 3; ++k) {
+        if (fds[k] == -2) src[k] = ::open("/dev/null", (k ? O_WRONLY : O_RDONLY) | O_CLOEXEC);
+        else if (fds[k] >= 0) src[k] = fcntl(fds[k], F_DUPFD_CLOEXEC, 3);
+        if (src[k] >= 0) temps.push_back(src[k]);
+    }
     posix_spawn_file_actions_addopen(&fa, 0, tty.c_str(), O_RDWR, 0);
     posix_spawn_file_actions_adddup2(&fa, 0, 1);
     posix_spawn_file_actions_adddup2(&fa, 0, 2);
+    for (int k = 0; k < 3; ++k) if (src[k] >= 0) posix_spawn_file_actions_adddup2(&fa, src[k], k);
     posix_spawnattr_t at;
     childSignals(&at, false);
     short flags = 0;
@@ -651,6 +676,7 @@ inline int spawnOnTerminal(const std::string& exe, char* const* argv, char* cons
     int rc = posix_spawn(&pid, exe.c_str(), &fa, &at, argv, envp);
     posix_spawnattr_destroy(&at);
     posix_spawn_file_actions_destroy(&fa);
+    for (int t : temps) ::close(t);
     return rc;
 }
 

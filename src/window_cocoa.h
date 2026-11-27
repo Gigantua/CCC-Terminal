@@ -502,6 +502,7 @@ private:
     }
 
     static void adoptLoginEnvironment() {
+        os::kernel::importLoginEnvironment();
         char cwd[4096];
         const char* home = getenv("HOME");
         if (home && getcwd(cwd, sizeof cwd) && std::strcmp(cwd, "/") == 0 && chdir(home) != 0) {}

@@ -321,9 +321,10 @@ private:
         bool ctrl = keyDown(VK_CONTROL), shift = keyDown(VK_SHIFT), alt = keyDown(VK_MENU);
         if (!ctrl || alt) return false;
         if (vk == VK_TAB) postTab(InputEvent::TabCycle, shift ? -1 : 1);
-        else if (shift && vk == 'T') postTab(InputEvent::TabReopen, 1);
+        else if (vk == 'T') postTab(shift ? InputEvent::TabReopen : InputEvent::TabNew, 1);
+        else if (vk == 'W') postTab(InputEvent::TabClose, -1);
+        else if (!shift && vk >= '1' && vk <= '9') postTab(InputEvent::TabSelect, vk == '9' ? (std::max)((int)tabCount - 1, 0) : (int)vk - '1');
         else if (shift && vk == 'N') postTab(InputEvent::TabNew);
-        else if (shift && vk == 'W') postTab(InputEvent::TabClose, -1);
         else return false;
         takeChar(WM_CHAR, WM_DEADCHAR);
         return true;

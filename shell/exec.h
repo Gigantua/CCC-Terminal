@@ -66,6 +66,7 @@ inline int Shell::execPipe(Node* n, Ctx& c) {
     os::Handle r, w;
     if (!os::createPipe(r, w, os::PIPE_BYTES)) return 1;
     Ctx left = c, right = c;
+    left.pipeLeft = true;
     right.in = Source{ r };
     pushLocal();
     struct Restore { Shell* s; size_t depth; ~Restore() { while (s->locals.size() >= depth) s->endlocal(); } } restore{ this, locals.size() };

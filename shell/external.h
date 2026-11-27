@@ -84,12 +84,33 @@ inline bool Shell::attachable(const Ctx& c) {
     return console(c.out) && console(c.err) && !c.in.hasHandle();
 }
 
-inline int Shell::spawnAttached(ConsoleServer& server, const std::string& exe, const std::string& cmdline, Ctx& c) {
+// On Linux and macOS a program keeps the terminal as its controlling tty when only some of its
+// streams are redirected, as in a POSIX shell: `git log | less`, `ssh host > log`, `vim 2>nul`.
+// fds gets, for stdin, stdout and stderr: -1 = the terminal, -2 = /dev/null, else that handle.
+inline bool Shell::terminalStreams(const Ctx& c, int (&fds)[3]) {
+#ifdef _WIN32
+    (void)c; (void)fds;
+    return false;
+#else
+    if (c.out.buf || c.err.buf) return false;
+    auto console = [](const Sink& s) { return s.con && !s.discard && !s.hasHandle(); };
+    if (!console(c.out) && (c.in.hasHandle() || c.pipeLeft)) return false;
+    auto target = [&](const Sink& s) { return console(s) ? -1 : s.discard ? -2 : s.hasHandle() ? (int)s.h : -3; };
+    fds[0] = c.in.hasHandle() ? (int)c.in.h : -1;
+    fds[1] = target(c.out);
+    fds[2] = target(c.err);
+    return fds[1] != -3 && fds[2] != -3;
+#endif
+}
+
+inline int Shell::spawnAttached(ConsoleServer& server, const std::string& exe, const std::string& cmdline, Ctx& c, const int* fds) {
     prepareChild();
+    c.out.flush();
+    c.err.flush();
     server.begin(host.screenColumns(), host.screenRows());
     os::Process process;
     int err = 0;
-    if (!launchInConsole(server, exe, cmdline, process, err)) {
+    if (!launchInConsole(server, exe, cmdline, process, err, fds)) {
         server.end();
         return notRun(c, systemMessage(err));
     }
@@ -100,7 +121,11 @@ inline int Shell::spawnAttached(ConsoleServer& server, const std::string& exe, c
 }
 
 inline int Shell::spawn(const std::string& exe, const std::string& cmdline, Ctx& c, bool wait) {
-    if (ConsoleServer* server = host.server(); server && wait && attachable(c) && !os::isGuiProgram(exe)) return spawnAttached(*server, exe, cmdline, c);
+    if (ConsoleServer* server = host.server(); server && wait && !os::isGuiProgram(exe)) {
+        if (attachable(c)) return spawnAttached(*server, exe, cmdline, c);
+        int fds[3];
+        if (terminalStreams(c, fds)) return spawnAttached(*server, exe, cmdline, c, fds);
+    }
     os::Handle outRead = os::NO_HANDLE, outWrite = os::NO_HANDLE, inRead = os::NO_HANDLE, inWrite = os::NO_HANDLE;
     Handles nulls;
     for (Sink* s : { &c.out, &c.err })

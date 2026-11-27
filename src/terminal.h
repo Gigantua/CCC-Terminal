@@ -425,7 +425,12 @@ private:
     bool consoleKey(const InputEvent& e) {
         int vk = e.value;
         if (selectionKey(vk, e.ctrl) || zoomKey(vk, e.ctrl, e.alt, e.state)) return true;
-        if ((e.ctrl && !e.alt && vk == 'V') || (e.shift && vk == VK_INSERT)) { askClipboard(ClipboardUse::Paste); return true; }
+#ifdef _WIN32
+        bool pasteKey = e.ctrl && !e.alt && vk == 'V';
+#else
+        bool pasteKey = e.ctrl && e.shift && !e.alt && vk == 'V';
+#endif
+        if (pasteKey || (e.shift && vk == VK_INSERT)) { askClipboard(ClipboardUse::Paste); return true; }
         if (e.ctrl && vk == 'C' && !e.shift && host.srv.processedInput()) { signal(CTRL_C_EVENT); return true; }
         if (vk == VK_CANCEL) { signal(CTRL_BREAK_EVENT); return true; }
         return !host.srv.altScreen() && pageKey(vk, e.shift);
@@ -707,7 +712,11 @@ private:
 
     void onKey(int vk, bool ctrl, bool shift, bool alt, unsigned state) {
         if (onPasteConfirm(vk)) return;
+#ifdef __APPLE__
+        if (ctrl && !shift && !alt && vk == 'W') { swallowChar = true; line.deleteWord(false); edited(false); return; }
+#else
         if (ctrl && !shift && !alt && vk == 'W' && onCloseKey && idleAtPrompt()) { swallowChar = true; onCloseKey(); return; }
+#endif
         if (zoomKey(vk, ctrl, alt, state)) return;
         if (ctrl && vk == 'A') { select(0, frame.rows * frame.cols - 1); return; }
         if (selectionKey(vk, ctrl)) return;
