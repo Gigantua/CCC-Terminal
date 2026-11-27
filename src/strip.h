@@ -151,7 +151,7 @@ inline std::u32string fit(const std::u32string& title, int cols) {
 
 inline void layout(Console::Frame& f, const Strip& s, const std::vector<StripTab>& tabs, int active, const StripHover& hover, uint32_t termBg) {
     uint32_t base = termBg & 0xFFFFFF, ink = contrast(base), bar = barColor(base);
-    uint32_t hot = mix(base, ink, 0.17f), hotter = mix(base, ink, 0.26f);
+    uint32_t hot = mix(base, ink, 0.17f);
     uint32_t dim = mix(base, ink, 0.62f), bright = mix(base, ink, 0.92f), accent = vt::rgb(58, 150, 221);
     f.cols = s.cols();
     f.rows = 1;
@@ -180,7 +180,7 @@ inline void layout(Console::Frame& f, const Strip& s, const std::vector<StripTab
         if (tabs[i].activity && !on) place(f, c0, c0, U"\x2022", accent, bg);
         place(f, c0 + 1, (std::min)(last - 3, f.cols - 1), fit(tabs[i].title, s.tabCols - 5), fg, bg);
         int close = c0 + s.tabCols - 3;
-        if (close < f.cols) place(f, close, close, U"\x00D7", hovered && hover.close ? bright : dim, hovered && hover.close ? hotter : bg);
+        if (close < f.cols) place(f, close, close, U"\x00D7", hovered && hover.close ? bright : dim, bg);
     }
     int plus = (shown + (drop >= 0 ? 1 : 0)) * s.tabCols;
     for (int c = plus; c < plus + Strip::NEW_COLS && c < f.cols; ++c) f.attrs[c].bg = hover.plus ? hot : bar;

@@ -22,7 +22,7 @@ struct GpuConstants {
     uint32_t stripTabTop, stripColor, buttonsX, buttonW;
     uint32_t buttonHover, buttonPressed, iconColor, iconHalf;
     uint32_t iconStroke, maximized, closeColor, tabShape;
-    uint32_t pictureCount;
+    uint32_t pictureCount, closeHover, closeHoverColor;
 };
 
 inline void saveBmp(const std::string& path, uint32_t w, uint32_t h, const std::vector<uint8_t>& bgraTopDown) {
