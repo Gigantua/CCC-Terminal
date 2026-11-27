@@ -475,9 +475,9 @@ private:
         int tab = std::exchange(dragTab, -1);
         hideDragOutline();
         endDrop();
-        if (GetCapture() == hwnd) ReleaseCapture();
-        int to = ownDrop.load();
+        int to = ownDrop.load();  // read first: ReleaseCapture sends WM_CAPTURECHANGED, which cancels the drag
         unliftTab();
+        if (GetCapture() == hwnd) ReleaseCapture();
         if (dragging && overStrip(x, y) && to >= 0 && to != tab) post({ InputEvent::TabMove, tab, to });
         if (!dragging || overStrip(x, y)) return;
         POINT p = { x, y };
