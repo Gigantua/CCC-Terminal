@@ -81,7 +81,7 @@ struct StripTab {
 struct StripHover {
     int tab = -1;
     bool close = false, plus = false;
-    int drop = -1;
+    int drop = -1, lifted = -1;
 };
 
 // Where a tab dragged from another ccc window would land; the dragging window reports the pointer.
@@ -161,13 +161,17 @@ inline void layout(Console::Frame& f, const Strip& s, const std::vector<StripTab
     blank.fg = bright;
     blank.bg = bar;
     f.attrs.assign(f.cols, blank);
-    int drop = hover.drop >= 0 ? (std::min)(hover.drop, (int)tabs.size()) : -1;
+    int lifted = hover.lifted >= 0 && hover.lifted < (int)tabs.size() ? hover.lifted : -1;
+    int shown = (int)tabs.size() - (lifted >= 0 ? 1 : 0);
+    int drop = hover.drop >= 0 ? (std::min)(hover.drop, shown) : -1;
     if (drop >= 0) {
         int c0 = drop * s.tabCols, last = (std::min)(c0 + s.tabCols - 2, f.cols - 1);
         for (int c = c0; c <= last; ++c) f.attrs[c].bg = mix(bar, accent, 0.35f);
     }
-    for (int i = 0; i < (int)tabs.size(); ++i) {
-        int slot = drop >= 0 && i >= drop ? i + 1 : i;
+    for (int i = 0, k = 0; i < (int)tabs.size(); ++i) {
+        if (i == lifted) continue;
+        int slot = drop >= 0 && k >= drop ? k + 1 : k;
+        ++k;
         int c0 = slot * s.tabCols, last = (std::min)(c0 + s.tabCols - 2, f.cols - 1);
         if (c0 >= f.cols) break;
         bool on = i == active, hovered = hover.tab == i;
@@ -178,7 +182,7 @@ inline void layout(Console::Frame& f, const Strip& s, const std::vector<StripTab
         int close = c0 + s.tabCols - 3;
         if (close < f.cols) place(f, close, close, U"\x00D7", hovered && hover.close ? bright : dim, hovered && hover.close ? hotter : bg);
     }
-    int plus = ((int)tabs.size() + (drop >= 0 ? 1 : 0)) * s.tabCols;
+    int plus = (shown + (drop >= 0 ? 1 : 0)) * s.tabCols;
     for (int c = plus; c < plus + Strip::NEW_COLS && c < f.cols; ++c) f.attrs[c].bg = hover.plus ? hot : bar;
     if (plus + 1 < f.cols) place(f, plus + 1, plus + 1, U"+", hover.plus ? bright : dim, hover.plus ? hot : bar);
 }

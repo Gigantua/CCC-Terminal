@@ -49,6 +49,7 @@ public:
     std::atomic<int> hoverButton{ -1 }, pressedButton{ -1 };
     std::atomic<int> hoverTab{ -1 };
     DropSlot dropSlot;
+    std::atomic<int> liftedTab{ -1 }, ownDrop{ -1 };
     pid_t dropTarget = 0;
     std::atomic<bool> hoverClose{ false }, hoverPlus{ false }, focused{ true };
 
@@ -83,7 +84,7 @@ public:
         return s;
     }
 
-    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load(), dropSlot.get() }; }
+    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load(), ownDrop >= 0 ? ownDrop.load() : dropSlot.get(), liftedTab.load() }; }
 
     bool maximized() const { return zoomed; }
 
@@ -296,7 +297,10 @@ public:
             hideDragOutline();
             endDrop();
             NSPoint screen = [NSEvent mouseLocation];
-            if (std::exchange(dragging, false) && strip().tornOff(x, y, width)) deliver({ InputEvent::TabTear, tab, (int)screen.x, (int)topToBottom(screen.y, 0) });
+            bool dragged = std::exchange(dragging, false);
+            if (dragged && strip().tornOff(x, y, width)) { unliftTab(); deliver({ InputEvent::TabTear, tab, (int)screen.x, (int)topToBottom(screen.y, 0) }); }
+            else if (dragged) dropInStrip(tab);
+            else unliftTab();
             return;
         }
         if (button == 3 && y < inset && !buttonsHeld && strip().tabAt(x) >= 0) {
@@ -323,12 +327,13 @@ public:
         if (dragTab >= 0) {
             if (!dragging && std::abs(x - dragX) < 4 && std::abs(y - dragY) < 4) return;
             dragging = true;
+            showDragOutline();
             if (strip().tornOff(x, y, width)) {
-                showDragOutline();
+                unliftTab();
                 NSPoint screen = [NSEvent mouseLocation];
                 hoverDrop((int)screen.x, (int)topToBottom(screen.y, 0));
             }
-            else { hideDragOutline(); endDrop(); dragStripTab(x); }
+            else { endDrop(); dragStripTab(x); }
             return;
         }
         applyPointer(x, y);
@@ -807,12 +812,23 @@ private:
         outlineReady = false;
     }
 
+    // Inside its own strip the dragged tab follows the pointer as an outline; a gap shows where it lands.
     void dragStripTab(int x) {
         Strip s = strip();
         int to = std::clamp((std::max)(x - s.x0, 0) / ((std::max)(s.tabCols, 1) * s.cellW), 0, (std::max)(s.count - 1, 0));
-        if (to == dragTab) return;
-        deliver({ InputEvent::TabMove, dragTab, to });
-        dragTab = to;
+        bool changed = liftedTab.exchange(dragTab) != dragTab;
+        if (ownDrop.exchange(to) != to || changed) requestFrame();
+    }
+
+    void unliftTab() {
+        liftedTab = -1;
+        if (ownDrop.exchange(-1) >= 0) requestFrame();
+    }
+
+    void dropInStrip(int tab) {
+        int to = ownDrop.load();
+        unliftTab();
+        if (to >= 0 && to != tab) deliver({ InputEvent::TabMove, tab, to });
     }
 };
 

@@ -45,6 +45,7 @@ public:
     std::atomic<int> hoverButton{ -1 }, pressedButton{ -1 };
     std::atomic<int> hoverTab{ -1 };
     DropSlot dropSlot;
+    std::atomic<int> liftedTab{ -1 }, ownDrop{ -1 };
     HWND dropTarget = nullptr;
     std::atomic<bool> hoverClose{ false }, hoverPlus{ false }, focused{ true };
     bool hoverCtrl = false;
@@ -57,7 +58,7 @@ public:
         return Strip::make(width, dpi, cellW, cellH, tabCount);
     }
 
-    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load(), dropSlot.get() }; }
+    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load(), ownDrop >= 0 ? ownDrop.load() : dropSlot.get(), liftedTab.load() }; }
 
     bool maximized() const { return IsZoomed(hwnd) != 0; }
 
@@ -455,15 +456,19 @@ private:
         dragging = true;
         bool inside = overStrip(x, y);
         SetCursor(LoadCursorW(nullptr, inside ? (LPCWSTR)IDC_ARROW : (LPCWSTR)IDC_SIZEALL));
-        if (!inside) { showDragOutline(x, y); hoverDrop(x, y); return; }
-        hideDragOutline();
+        showDragOutline(x, y);
+        if (!inside) { unliftTab(); hoverDrop(x, y); return; }
         endDrop();
+        // Inside its own strip the dragged tab follows the pointer as an outline; a gap shows where it lands.
         Strip s = strip();
         int to = std::clamp((std::max)(x - s.x0, 0) / ((std::max)(s.tabCols, 1) * s.cellW), 0, (std::max)(s.count - 1, 0));
-        if (to == dragTab) return;
-        InputEvent e{ InputEvent::TabMove, dragTab, to };
-        post(e);
-        dragTab = to;
+        bool changed = liftedTab.exchange(dragTab) != dragTab;
+        if (ownDrop.exchange(to) != to || changed) requestFrame();
+    }
+
+    void unliftTab() {
+        liftedTab = -1;
+        if (ownDrop.exchange(-1) >= 0) requestFrame();
     }
 
     void dropStripTab(int x, int y) {
@@ -471,6 +476,9 @@ private:
         hideDragOutline();
         endDrop();
         if (GetCapture() == hwnd) ReleaseCapture();
+        int to = ownDrop.load();
+        unliftTab();
+        if (dragging && overStrip(x, y) && to >= 0 && to != tab) post({ InputEvent::TabMove, tab, to });
         if (!dragging || overStrip(x, y)) return;
         POINT p = { x, y };
         ClientToScreen(hwnd, &p);
@@ -804,7 +812,7 @@ private:
             return 0;
         }
         case WM_CAPTURECHANGED:
-            if ((HWND)lp != hwnd) { dragTab = -1; hideDragOutline(); endDrop(); }
+            if ((HWND)lp != hwnd) { dragTab = -1; hideDragOutline(); endDrop(); unliftTab(); }
             break;
         case WM_COPYDATA:
             dropSlot.set(-1);
