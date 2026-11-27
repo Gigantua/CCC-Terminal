@@ -113,6 +113,7 @@ private:
     CfRef<CGFontRef> bundledFont;
     Face faces[STYLES];
     std::unordered_map<uint64_t, CfRef<CTFontRef>> fallbacks;
+    CfRef<CTFontRef> emojiFont;
     std::string fontFamily;
     float size = 16;
     FontMetrics m;
@@ -179,6 +180,7 @@ private:
 
     bool makeFaces() {
         fallbacks.clear();
+        emojiFont = CfRef<CTFontRef>();
         bool ok = true;
         for (int s = 0; s < STYLES; ++s) {
             faces[s] = fontFamily == BUNDLED ? Face{ bundled(s, size), false } : system(s, size, ok);
@@ -216,6 +218,11 @@ private:
         CGGlyph glyphs[2] = {};
         int n = utf16(cp, units);
         return CTFontGetGlyphsForCharacters(font, units, glyphs, n) ? glyphs[0] : 0;
+    }
+
+    CTFontRef emojiFace(char32_t cp) {
+        if (!emojiFont) emojiFont = CfRef<CTFontRef>(CTFontCreateWithName(CFSTR("Apple Color Emoji"), size, nullptr));
+        return emojiFont && glyphIn(emojiFont.get(), cp) ? emojiFont.get() : nullptr;
     }
 
     CTFontRef faceFor(char32_t cp, int style, bool& synthBold) {
@@ -293,11 +300,13 @@ private:
             CGContextSetRGBStrokeColor(cg.get(), 1, 1, 1, 1);
             CGContextSetShouldSmoothFonts(cg.get(), false);
             CGContextSetAllowsFontSmoothing(cg.get(), false);
+            bool wantEmoji = text.find(unicode::VS_EMOJI) != std::u32string::npos;
             for (char32_t cp : text) {
                 if (cp >= Console::SIZED) continue;
                 if (cp == unicode::ZWJ || cp == unicode::VS_EMOJI || cp == unicode::VS_TEXT) continue;
                 bool synthBold = false;
-                CTFontRef font = faceFor(cp, style, synthBold);
+                CTFontRef font = wantEmoji ? emojiFace(cp) : nullptr;
+                if (!font) font = faceFor(cp, style, synthBold);
                 if (font) drawGlyph(cg.get(), font, synthBold, cp, cells, colored);
                 if (colored) break;
             }

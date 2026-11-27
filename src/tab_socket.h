@@ -33,6 +33,24 @@ inline bool send(int s, const Wire& w, int in, int out) {
 #endif
 }
 
+// pid 0 carries no descriptors: the pointer of a tab dragged over this window (x = INT32_MIN: it left).
+inline void hover(const sockaddr_un& address, socklen_t len, int type, int x, int y) {
+    int c = socket(AF_UNIX, type, 0);
+    if (c < 0) return;
+    fcntl(c, F_SETFD, FD_CLOEXEC);
+    fcntl(c, F_SETFL, O_NONBLOCK);
+    Wire w = { 0, x, y };
+    if (connect(c, reinterpret_cast<const sockaddr*>(&address), len) == 0) {
+#ifdef MSG_NOSIGNAL
+        ssize_t sent = ::send(c, &w, sizeof w, MSG_NOSIGNAL);
+#else
+        ssize_t sent = ::send(c, &w, sizeof w, 0);
+#endif
+        (void)sent;
+    }
+    close(c);
+}
+
 inline bool receive(int s, Wire& w, int (&fds)[2]) {
     iovec io = { &w, sizeof w };
     alignas(cmsghdr) char control[CMSG_SPACE(2 * sizeof(int))] = {};
@@ -42,6 +60,7 @@ inline bool receive(int s, Wire& w, int (&fds)[2]) {
     m.msg_control = control;
     m.msg_controllen = sizeof control;
     if (recvmsg(s, &m, MSG_WAITALL) != (ssize_t)sizeof w) return false;
+    if (w.pid == 0) return true;
     cmsghdr* c = CMSG_FIRSTHDR(&m);
     if (!c || c->cmsg_level != SOL_SOCKET || c->cmsg_type != SCM_RIGHTS || c->cmsg_len != CMSG_LEN(2 * sizeof(int))) return false;
     std::memcpy(fds, CMSG_DATA(c), sizeof fds);
@@ -62,8 +81,8 @@ inline bool give(const sockaddr_un& address, socklen_t len, int type, const TabH
     return ok;
 }
 
-template <class Place>
-inline void take(int listener, InputQueue& inputs, Place indexAt) {
+template <class Place, class Hover>
+inline void take(int listener, InputQueue& inputs, Place indexAt, Hover hovered) {
     int c = accept(listener, nullptr, nullptr);
     if (c < 0) return;
     fcntl(c, F_SETFD, FD_CLOEXEC);
@@ -71,7 +90,8 @@ inline void take(int listener, InputQueue& inputs, Place indexAt) {
     setsockopt(c, SOL_SOCKET, SO_RCVTIMEO, &limit, sizeof limit);
     Wire w = {};
     int fds[2] = { -1, -1 };
-    if (receive(c, w, fds)) {
+    if (receive(c, w, fds) && w.pid == 0) hovered(w.x, w.y);
+    else if (fds[0] >= 0) {
         TabHandoff h;
         h.in = fds[0];
         h.out = fds[1];

@@ -39,10 +39,13 @@ public:
     std::atomic<int> scrollbarWidth{ 12 };
     static constexpr UINT_PTR DRAG_TIMER = 1;
     static constexpr UINT WM_PROGRESS = WM_APP + 1;
+    static constexpr UINT WM_DROP_HOVER = WM_APP + 2;
     static constexpr ULONG_PTR HANDOFF_DATA = 0x63636374;
     std::atomic<int> cellW{ 0 }, cellH{ 0 }, tabCount{ 1 }, closedCount{ 0 };
     std::atomic<int> hoverButton{ -1 }, pressedButton{ -1 };
     std::atomic<int> hoverTab{ -1 };
+    DropSlot dropSlot;
+    HWND dropTarget = nullptr;
     std::atomic<bool> hoverClose{ false }, hoverPlus{ false }, focused{ true };
     bool hoverCtrl = false;
     int hoverAt = -1;
@@ -54,7 +57,7 @@ public:
         return Strip::make(width, dpi, cellW, cellH, tabCount);
     }
 
-    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load() }; }
+    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load(), dropSlot.get() }; }
 
     bool maximized() const { return IsZoomed(hwnd) != 0; }
 
@@ -433,13 +436,28 @@ private:
         return x >= 0 && x < width && y >= -h && y < 2 * h;
     }
 
+    // While a torn-off tab is over another ccc window, that window shows where it will land.
+    void hoverDrop(int x, int y) {
+        POINT p = { x, y };
+        ClientToScreen(hwnd, &p);
+        HWND target = cccWindowAt(p);
+        if (target != dropTarget) endDrop();
+        dropTarget = target;
+        if (target) PostMessageW(target, WM_DROP_HOVER, 0, MAKELPARAM((short)p.x, (short)p.y));
+    }
+
+    void endDrop() {
+        if (HWND target = std::exchange(dropTarget, nullptr)) PostMessageW(target, WM_DROP_HOVER, 1, 0);
+    }
+
     void dragStripTab(int x, int y) {
         if (!dragging && abs(x - dragStart.x) < GetSystemMetrics(SM_CXDRAG) && abs(y - dragStart.y) < GetSystemMetrics(SM_CYDRAG)) return;
         dragging = true;
         bool inside = overStrip(x, y);
         SetCursor(LoadCursorW(nullptr, inside ? (LPCWSTR)IDC_ARROW : (LPCWSTR)IDC_SIZEALL));
-        if (!inside) { showDragOutline(x, y); return; }
+        if (!inside) { showDragOutline(x, y); hoverDrop(x, y); return; }
         hideDragOutline();
+        endDrop();
         Strip s = strip();
         int to = std::clamp((std::max)(x - s.x0, 0) / ((std::max)(s.tabCols, 1) * s.cellW), 0, (std::max)(s.count - 1, 0));
         if (to == dragTab) return;
@@ -451,6 +469,7 @@ private:
     void dropStripTab(int x, int y) {
         int tab = std::exchange(dragTab, -1);
         hideDragOutline();
+        endDrop();
         if (GetCapture() == hwnd) ReleaseCapture();
         if (!dragging || overStrip(x, y)) return;
         POINT p = { x, y };
@@ -785,10 +804,21 @@ private:
             return 0;
         }
         case WM_CAPTURECHANGED:
-            if ((HWND)lp != hwnd) dragTab = -1;
+            if ((HWND)lp != hwnd) { dragTab = -1; hideDragOutline(); endDrop(); }
             break;
         case WM_COPYDATA:
+            dropSlot.set(-1);
             return receiveTab(reinterpret_cast<const COPYDATASTRUCT*>(lp));
+        case WM_DROP_HOVER: {
+            int slot = -1;
+            if (!wp) {
+                POINT p = { GET_X_LPARAM(lp), GET_Y_LPARAM(lp) };
+                ScreenToClient(hwnd, &p);
+                slot = DropSlot::at(strip(), p.x, p.y);
+            }
+            if (dropSlot.set(slot)) requestFrame();
+            return 0;
+        }
         case WM_DROPFILES:
             post({ InputEvent::Text, 0, 0, 0, false, false, droppedPaths(reinterpret_cast<HDROP>(wp)) });
             return 0;

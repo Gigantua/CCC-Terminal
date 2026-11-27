@@ -106,7 +106,7 @@ private:
 
     FT_Library library = nullptr;
     Face faces[STYLES];
-    std::unordered_map<uint32_t, FT_Face> fallbacks;
+    std::unordered_map<uint64_t, FT_Face> fallbacks;
     std::vector<FT_Face> fallbackFaces;
     std::unordered_map<std::string, FT_Face> fallbackFiles;
     std::string fontFamily;
@@ -199,15 +199,16 @@ private:
         return f;
     }
 
-    FT_Face fallbackFor(uint32_t cp) {
-        auto it = fallbacks.find(cp);
+    FT_Face fallbackFor(uint32_t cp, bool color = false) {
+        uint64_t slot = (uint64_t)cp | (uint64_t)color << 32;
+        auto it = fallbacks.find(slot);
         if (it != fallbacks.end()) return it->second;
         FcPattern* p = FcPatternCreate();
         FcCharSet* chars = FcCharSetCreate();
         FcCharSetAddChar(chars, cp);
         FcPatternAddCharSet(p, FC_CHARSET, chars);
         FcCharSetDestroy(chars);
-        if (cp >= 0x1F000) FcPatternAddBool(p, FC_COLOR, FcTrue);
+        if (color || cp >= 0x1F000) FcPatternAddBool(p, FC_COLOR, FcTrue);
         int index = 0;
         std::string file = matchFile(p, index);
         std::string key = file + "#" + std::to_string(index);
@@ -219,7 +220,8 @@ private:
             else { FT_Done_Face(face); face = nullptr; }
         }
         if (face && !FT_Get_Char_Index(face, cp)) face = nullptr;
-        fallbacks.emplace(cp, face);
+        if (color && face && !FT_HAS_COLOR(face)) face = nullptr;
+        fallbacks.emplace(slot, face);
         return face;
     }
 
@@ -315,11 +317,13 @@ private:
         int canvasW = cells * m.cellW;
         std::vector<uint32_t> canvas((size_t)canvasW * m.cellH, 0);
         bool colored = false;
+        bool wantEmoji = text.find(unicode::VS_EMOJI) != std::u32string::npos;
         for (char32_t cp : text) {
             if (cp >= Console::SIZED) continue;
             if (cp == unicode::ZWJ || cp == unicode::VS_EMOJI || cp == unicode::VS_TEXT) continue;
             Face synth;
-            FT_Face face = faceFor(cp, style, synth);
+            FT_Face face = wantEmoji ? fallbackFor(cp, true) : nullptr;
+            if (!face) face = faceFor(cp, style, synth);
             if (face) drawGlyph(face, synth, cp, 0, cells, canvas, canvasW, colored);
             if (colored) break;
         }

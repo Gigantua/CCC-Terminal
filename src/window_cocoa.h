@@ -48,6 +48,8 @@ public:
     std::atomic<int> cellW{ 0 }, cellH{ 0 }, tabCount{ 1 }, closedCount{ 0 };
     std::atomic<int> hoverButton{ -1 }, pressedButton{ -1 };
     std::atomic<int> hoverTab{ -1 };
+    DropSlot dropSlot;
+    pid_t dropTarget = 0;
     std::atomic<bool> hoverClose{ false }, hoverPlus{ false }, focused{ true };
 
     ~Window() {
@@ -81,7 +83,7 @@ public:
         return s;
     }
 
-    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load() }; }
+    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load(), dropSlot.get() }; }
 
     bool maximized() const { return zoomed; }
 
@@ -292,6 +294,7 @@ public:
         if (dragTab >= 0 && button == 1) {
             int tab = std::exchange(dragTab, -1);
             hideDragOutline();
+            endDrop();
             NSPoint screen = [NSEvent mouseLocation];
             if (std::exchange(dragging, false) && strip().tornOff(x, y, width)) deliver({ InputEvent::TabTear, tab, (int)screen.x, (int)topToBottom(screen.y, 0) });
             return;
@@ -320,8 +323,12 @@ public:
         if (dragTab >= 0) {
             if (!dragging && std::abs(x - dragX) < 4 && std::abs(y - dragY) < 4) return;
             dragging = true;
-            if (strip().tornOff(x, y, width)) showDragOutline();
-            else { hideDragOutline(); dragStripTab(x); }
+            if (strip().tornOff(x, y, width)) {
+                showDragOutline();
+                NSPoint screen = [NSEvent mouseLocation];
+                hoverDrop((int)screen.x, (int)topToBottom(screen.y, 0));
+            }
+            else { hideDragOutline(); endDrop(); dragStripTab(x); }
             return;
         }
         applyPointer(x, y);
@@ -477,11 +484,37 @@ private:
     }
 
     void receiveTab() {
-        tabsocket::take(tabSocket, *inputs, [this](int x, int y) {
+        auto local = [this](int x, int y) {
             double k = window.backingScaleFactor;
-            int lx = (int)std::lround((x - placement.left) * k), ly = (int)std::lround((y - placement.top) * k);
+            return std::pair<int, int>((int)std::lround((x - placement.left) * k), (int)std::lround((y - placement.top) * k));
+        };
+        tabsocket::take(tabSocket, *inputs, [&](int x, int y) {
+            auto [lx, ly] = local(x, y);
+            dropSlot.set(-1);
             return ly >= 0 && ly < strip().height ? strip().tabAt(lx) : -1;
+        }, [&](int x, int y) {
+            if (x == INT32_MIN) { if (dropSlot.set(-1)) requestFrame(); return; }
+            auto [lx, ly] = local(x, y);
+            if (dropSlot.set(DropSlot::at(strip(), lx, ly))) requestFrame();
         });
+    }
+
+    // While a torn-off tab is over another ccc window, that window shows where it will land.
+    void hoverDrop(int x, int y) {
+        pid_t target = cccWindowAt(x, y);
+        if (target != dropTarget) endDrop();
+        dropTarget = target;
+        if (!target) return;
+        socklen_t len = 0;
+        sockaddr_un address = tabAddress(target, len);
+        tabsocket::hover(address, len, SOCK_STREAM, x, y);
+    }
+
+    void endDrop() {
+        if (!dropTarget) return;
+        socklen_t len = 0;
+        sockaddr_un address = tabAddress(std::exchange(dropTarget, 0), len);
+        tabsocket::hover(address, len, SOCK_STREAM, INT32_MIN, INT32_MIN);
     }
 
     static pid_t cccWindowAt(int x, int y) {

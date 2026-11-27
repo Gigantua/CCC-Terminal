@@ -46,6 +46,8 @@ public:
     std::atomic<int> cellW{ 0 }, cellH{ 0 }, tabCount{ 1 }, closedCount{ 0 };
     std::atomic<int> hoverButton{ -1 }, pressedButton{ -1 };
     std::atomic<int> hoverTab{ -1 };
+    DropSlot dropSlot;
+    XWindow dropTarget = 0;
     std::atomic<bool> hoverClose{ false }, hoverPlus{ false }, focused{ true };
 
     ~Window() {
@@ -74,7 +76,7 @@ public:
         return Strip::make(width, dpi, cellW, cellH, tabCount);
     }
 
-    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load() }; }
+    StripHover stripHover() const { return { hoverTab.load(), hoverClose.load(), hoverPlus.load(), dropSlot.get() }; }
 
     bool maximized() const { return maximizedNow; }
 
@@ -270,12 +272,39 @@ private:
     }
 
     void receiveTab() {
-        tabsocket::take(tabSocket, *inputs, [this](int x, int y) {
+        auto local = [this](int x, int y) {
             int lx = 0, ly = 0;
             XWindow child = 0;
             XTranslateCoordinates(display, DefaultRootWindow(display), window, x, y, &lx, &ly, &child);
+            return std::pair<int, int>(lx, ly);
+        };
+        tabsocket::take(tabSocket, *inputs, [&](int x, int y) {
+            auto [lx, ly] = local(x, y);
+            dropSlot.set(-1);
             return ly >= 0 && ly < strip().height ? strip().tabAt(lx) : -1;
+        }, [&](int x, int y) {
+            if (x == INT32_MIN) { if (dropSlot.set(-1)) requestFrame(); return; }
+            auto [lx, ly] = local(x, y);
+            if (dropSlot.set(DropSlot::at(strip(), lx, ly))) requestFrame();
         });
+    }
+
+    // While a torn-off tab is over another ccc window, that window shows where it will land.
+    void hoverDrop(int x, int y) {
+        XWindow target = cccWindowAt(x, y);
+        if (target != dropTarget) endDrop();
+        dropTarget = target;
+        if (!target) return;
+        socklen_t len = 0;
+        sockaddr_un address = tabAddress(target, len);
+        tabsocket::hover(address, len, SOCK_SEQPACKET, x, y);
+    }
+
+    void endDrop() {
+        if (!dropTarget) return;
+        socklen_t len = 0;
+        sockaddr_un address = tabAddress(std::exchange(dropTarget, (XWindow)0), len);
+        tabsocket::hover(address, len, SOCK_SEQPACKET, INT32_MIN, INT32_MIN);
     }
 
     XWindow cccWindowAt(int x, int y) {
@@ -654,6 +683,7 @@ private:
         if (dragTab >= 0 && b.button == Button1) {
             int tab = std::exchange(dragTab, -1);
             hideDragOutline();
+            endDrop();
             if (std::exchange(dragging, false) && strip().tornOff(x, y, width)) deliver({ InputEvent::TabTear, tab, b.x_root, b.y_root });
             return;
         }
@@ -684,8 +714,8 @@ private:
         if (dragTab >= 0) {
             if (!dragging && std::abs(x - dragX) < 4 && std::abs(y - dragY) < 4) return;
             dragging = true;
-            if (strip().tornOff(x, y, width)) showDragOutline(m.x_root - grabX, m.y_root - grabY);
-            else { hideDragOutline(); dragStripTab(x); }
+            if (strip().tornOff(x, y, width)) { showDragOutline(m.x_root - grabX, m.y_root - grabY); hoverDrop(m.x_root, m.y_root); }
+            else { hideDragOutline(); endDrop(); dragStripTab(x); }
             return;
         }
         applyPointer(y, x);
